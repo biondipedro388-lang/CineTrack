@@ -1,0 +1,311 @@
+
+.stApp {
+    background-color: #0b0d12;
+    color: #f4f5f7;
+}
+
+.block-container {
+    padding-top: 2rem;
+    max-width: 1200px;
+}
+
+.hero {
+    background: linear-gradient(120deg, #20253a, #121620);
+    border: 1px solid #30364a;
+    border-radius: 20px;
+    padding: 35px;
+    margin-bottom: 28px;
+}
+
+.hero h1 {
+    font-size: 42px;
+    margin-bottom: 8px;
+}
+
+.hero p {
+    color: #b5bdd0;
+    font-size: 17px;
+}
+
+.metric-card {
+    background: #151923;
+    border: 1px solid #292f3d;
+    border-radius: 16px;
+    padding: 22px;
+    min-height: 125px;
+}
+
+.metric-label {
+    color: #aab2c4;
+    font-size: 14px;
+}
+
+.metric-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-top: 10px;
+}
+
+.section-title {
+    font-size: 25px;
+    font-weight: 700;
+    margin: 30px 0 16px 0;
+}
+
+.movie-card {
+    background: #151923;
+    border: 1px solid #292f3d;
+    border-radius: 15px;
+    padding: 18px;
+    min-height: 210px;
+    margin-bottom: 12px;
+}
+
+.movie-icon {
+    font-size: 42px;
+}
+
+.movie-card h3 {
+    font-size: 19px;
+    margin-bottom: 5px;
+}
+
+.movie-card p {
+    color: #aab2c4;
+    font-size: 14px;
+}
+
+div.stButton > button {
+    border-radius: 10px;
+    min-height: 42px;
+}
+
+div[data-testid="stTextInput"] input {
+    background-color: #151923;
+    color: #f4f5f7;
+    border-color: #30364a;
+}
+
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+    background-color: #151923;
+    border-color: #30364a;
+}
+
+.page-intro {
+    color: #aab2c4;
+    font-size: 16px;
+    margin-bottom: 24px;
+}
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 90% 10%, #5941a9 0%, transparent 40%),
+        linear-gradient(120deg, #1c2032, #10131d 75%);
+    border: 1px solid #34334e;
+    border-radius: 24px;
+    padding: 46px 40px;
+    min-height: 240px;
+}
+
+.hero-tag,
+.feature-label {
+    color: #b9a7ff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.hero h1 {
+    font-size: clamp(42px, 6vw, 64px);
+    font-weight: 850;
+    letter-spacing: -2px;
+    margin: 18px 0 8px;
+}
+
+.hero-dot {
+    color: #9b7bff;
+}
+
+.hero p {
+    color: #b9bfd0;
+    font-size: 18px;
+}
+
+.metric-card {
+    position: relative;
+    background: linear-gradient(145deg, #191d2a, #12151e);
+    border: 1px solid #2a3040;
+    border-radius: 18px;
+    padding: 22px;
+    min-height: 155px;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.metric-card:hover,
+.feature-card:hover {
+    border-color: #8d73ef;
+    transform: translateY(-3px);
+}
+
+.metric-icon {
+    font-size: 22px;
+    margin-bottom: 18px;
+    color: #b9a7ff;
+}
+
+.metric-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #a5acc0;
+}
+
+.metric-value {
+    font-size: 34px;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+.feature-card {
+    background: linear-gradient(145deg, #1b2030, #12151e);
+    border: 1px solid #2c3243;
+    border-radius: 20px;
+    padding: 27px;
+    min-height: 220px;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.catalog-feature {
+    background:
+        radial-gradient(ellipse at 100% 0%, #46337c 0%, transparent 55%),
+        #171a27;
+}
+
+.collection-feature {
+    background:
+        radial-gradient(ellipse at 100% 0%, #244b50 0%, transparent 55%),
+        #171a27;
+}
+
+.feature-icon {
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+
+.feature-card h3 {
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+.feature-card p {
+    color: #aeb6c9;
+    line-height: 1.6;
+}
+
+.recent-title {
+    font-size: 17px;
+    font-weight: 750;
+    margin-top: 10px;
+    overflow-wrap: anywhere;
+}
+
+div.stButton > button {
+    border-radius: 11px;
+    min-height: 45px;
+    font-weight: 650;
+}
+
+@media (max-width: 640px) {
+    .hero {
+        padding: 30px 22px;
+        min-height: auto;
+    }
+
+    .hero h1 {
+        letter-spacing: -1px;
+    }
+
+    .metric-card {
+        padding: 15px;
+        min-height: 130px;
+    }
+
+    .metric-value {
+        font-size: 28px;
+    }
+
+    .feature-card {
+        padding: 20px;
+    }
+}
+
+header.stAppHeader {
+    display: none !important;
+}
+
+[data-testid="stExpandSidebarButton"] {
+    display: none !important;
+}
+
+.cinetrack-navbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 0 18px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #292d3d;
+}
+
+.cinetrack-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #f5f3ff;
+    font-size: 25px;
+    font-weight: 850;
+    letter-spacing: -1px;
+}
+
+.cinetrack-logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #a78bfa, #6d4aff);
+    color: white;
+    font-size: 22px;
+}
+
+.cinetrack-logo-dot {
+    color: #9b7bff;
+}
+
+div[data-testid="stPageLink"] a {
+    border-radius: 10px;
+    color: #c3c8d8;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+div[data-testid="stPageLink"] a:hover {
+    color: #b9a7ff;
+}
+
+div.stButton > button[kind="secondary"] {
+    border: 1px solid #8d73ef;
+    color: #d8ceff;
+    background: transparent;
+}
+
+.feature-card {
+    margin-bottom: 0;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+div.stButton > button {
+    margin-top: 8px;
+}
+
