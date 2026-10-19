@@ -11,8 +11,8 @@ def mostrar_navbar():
     </div>
     """, unsafe_allow_html=True)
 
-    espaco, inicio, catalogo, colecao, entrar = st.columns(
-        [3, 1.2, 1.4, 1.8, 1.2],
+    espaco, inicio, catalogo, colecao, estatisticas, entrar = st.columns(
+        [2.2, 1, 1.2, 1.5, 1.2, 1],
         vertical_alignment="center"
     )
 
@@ -24,6 +24,9 @@ def mostrar_navbar():
 
     with colecao:
         st.page_link("pages/2_Minha_Colecao.py", label="Minha coleção")
+
+    with estatisticas:
+        st.page_link("pages/4_Estatisticas.py", label="Estatísticas")
 
     with entrar:
         if st.button("Entrar", key="navbar_entrar", use_container_width=True):

@@ -1,4 +1,3 @@
-
 import sqlite3
 from pathlib import Path
 
@@ -25,9 +24,22 @@ def criar_tabela():
                 poster TEXT,
                 status TEXT NOT NULL DEFAULT 'Quero assistir',
                 nota_pessoal REAL,
+                favorito INTEGER NOT NULL DEFAULT 0,
                 UNIQUE(tmdb_id, categoria)
             )
         """)
+
+        colunas = conexao.execute(
+            "PRAGMA table_info(titulos)"
+        ).fetchall()
+
+        nomes_colunas = [coluna["name"] for coluna in colunas]
+
+        if "favorito" not in nomes_colunas:
+            conexao.execute("""
+                ALTER TABLE titulos
+                ADD COLUMN favorito INTEGER NOT NULL DEFAULT 0
+            """)
 
 
 def listar_titulos():
@@ -72,12 +84,34 @@ def atualizar_status(titulo_id, status):
 
 def atualizar_nota_pessoal(titulo_id, nota):
     with conectar() as conexao:
-        with conexao:
-            conexao.execute("""
-                UPDATE titulos
-                SET nota_pessoal = ?
-                WHERE id = ?
-            """, (nota, titulo_id))
+        conexao.execute("""
+            UPDATE titulos
+            SET nota_pessoal = ?
+            WHERE id = ?
+        """, (nota, titulo_id))
+
+
+def atualizar_favorito(titulo_id, favorito):
+    with conectar() as conexao:
+        conexao.execute("""
+            UPDATE titulos
+            SET favorito = ?
+            WHERE id = ?
+        """, (1 if favorito else 0, titulo_id))
+
+
+def atualizar_dados_titulo(titulo_id, nome, ano, sinopse):
+    with conectar() as conexao:
+        conexao.execute("""
+            UPDATE titulos
+            SET nome = ?, ano = ?, sinopse = ?
+            WHERE id = ?
+        """, (
+            nome.strip(),
+            ano.strip(),
+            sinopse.strip(),
+            titulo_id
+        ))
 
 
 def remover_titulo(titulo_id):
