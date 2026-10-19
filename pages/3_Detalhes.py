@@ -145,7 +145,7 @@ with col1:
         st.markdown("🎬 Pôster indisponível")
 
 with col2:
-    nome = detalhes.get("title") or detalhes.get("name") or titulo["nome"]
+    nome = titulo["nome"] or detalhes.get("title") or detalhes.get("name", "")
 
     st.header(nome)
 
@@ -166,9 +166,10 @@ with col2:
         st.markdown("**Gêneros:** " + " • ".join(generos))
 
     data = detalhes.get("release_date") or detalhes.get("first_air_date")
+    ano_exibicao = titulo["ano"] or (data[:4] if data else "")
 
-    if data:
-        st.markdown(f"**Lançamento:** {data}")
+    if ano_exibicao:
+        st.markdown(f"**Ano de lançamento:** {ano_exibicao}")
 
     duracao = detalhes.get("runtime")
 
@@ -197,8 +198,8 @@ with col2:
     st.markdown("### Sinopse")
 
     st.write(
-        detalhes.get("overview")
-        or titulo["sinopse"]
+        titulo["sinopse"]
+        or detalhes.get("overview")
         or "Sinopse indisponível."
     )
 
