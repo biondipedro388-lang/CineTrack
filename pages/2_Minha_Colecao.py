@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import html
 
 import streamlit as st
 
@@ -31,17 +32,6 @@ with open(ROOT / "styles.css", encoding="utf-8") as arquivo:
 
 st.markdown("""
 <style>
-.collection-card {
-    background: linear-gradient(145deg, #191d2a, #11141d);
-    border: 1px solid #2c3243;
-    border-radius: 18px;
-    padding: 22px;
-    margin: 10px 0 22px;
-    transition: border-color 0.2s, transform 0.2s;
-}
-.collection-card:hover {
-    border-color: #8d73ef;
-}
 .collection-title {
     color: #f4f5f7;
     font-size: 23px;
@@ -90,6 +80,29 @@ div[data-testid="stImage"] img {
 }
 div[data-testid="stSlider"] {
     padding-top: 4px;
+}
+div[class*="st-key-collection_card_"] {
+    background: linear-gradient(145deg, #191d2a, #11141d);
+    border: 1px solid #2c3243;
+    border-radius: 18px;
+    padding: 22px;
+    margin: 10px 0 22px;
+    transition: border-color 0.2s, transform 0.2s;
+}
+div[class*="st-key-collection_card_"]:hover {
+    border-color: #8d73ef;
+}
+.collection-empty {
+    text-align: center;
+    padding: 35px 20px;
+    border: 1px solid #2c3243;
+    border-radius: 18px;
+    background: linear-gradient(145deg, #191d2a, #11141d);
+}
+@media (max-width: 768px) {
+    .collection-title {
+        font-size: 20px;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -220,7 +233,7 @@ if busca.strip():
     termo = busca.strip().casefold()
     titulos = [
         titulo for titulo in titulos
-        if termo in (titulo["nome"] or "").casefold()
+        if termo in (titulo.get("nome") or "").casefold()
     ]
 
 if ordenacao == "Adicionados recentemente":
@@ -230,18 +243,18 @@ if ordenacao == "Adicionados recentemente":
     )
 elif ordenacao == "Nome (A–Z)":
     titulos.sort(
-        key=lambda titulo: (titulo["nome"] or "").casefold()
+        key=lambda titulo: (titulo.get("nome") or "").casefold()
     )
 elif ordenacao == "Nome (Z–A)":
     titulos.sort(
-        key=lambda titulo: (titulo["nome"] or "").casefold(),
+        key=lambda titulo: (titulo.get("nome") or "").casefold(),
         reverse=True
     )
 elif ordenacao == "Ano (mais recente)":
     titulos.sort(
         key=lambda titulo: (
             int(titulo["ano"])
-            if str(titulo["ano"] or "").isdigit()
+            if str(titulo.get("ano") or "").isdigit()
             else 0
         ),
         reverse=True
@@ -250,57 +263,65 @@ elif ordenacao == "Ano (mais antigo)":
     titulos.sort(
         key=lambda titulo: (
             int(titulo["ano"])
-            if str(titulo["ano"] or "").isdigit()
+            if str(titulo.get("ano") or "").isdigit()
             else 9999
         )
     )
 elif ordenacao == "Nota do TMDB (maior primeiro)":
     titulos.sort(
-        key=lambda titulo: float(titulo["nota_tmdb"] or 0),
+        key=lambda titulo: float(titulo.get("nota_tmdb") or 0),
         reverse=True
     )
 elif ordenacao == "Sua nota pessoal (maior primeiro)":
     titulos.sort(
         key=lambda titulo: (
-            titulo["nota_pessoal"] is not None,
-            float(titulo["nota_pessoal"] or 0)
+            titulo.get("nota_pessoal") is not None,
+            float(titulo.get("nota_pessoal") or 0)
         ),
         reverse=True
     )
 
+st.write("")
+
 if not titulos:
     if not titulos_originais:
+        st.markdown("""
+        <div class="collection-empty">
+            <h3>🎬 Sua coleção começa aqui</h3>
+            <p>Explore o catálogo e adicione seus primeiros filmes e séries.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("Explorar catálogo", type="primary"):
+            st.switch_page("pages/1_Catalogo.py")
+    elif filtro_favoritos == "Somente favoritos" and not any(
+        titulo.get("favorito", 0) == 1
+        for titulo in titulos_originais
+    ):
         st.info(
-            "Sua coleção ainda está vazia. "
-            "Explore o catálogo para adicionar seu primeiro título."
-        )
-    elif filtro_favoritos == "Somente favoritos":
-        st.info(
-            "Você ainda não tem favoritos nessa visualização. "
+            "Você ainda não tem favoritos. "
             "Marque títulos com ⭐ para encontrá-los aqui."
         )
     else:
         st.info("Nenhum título encontrado com os filtros selecionados.")
 else:
-    st.write(f"{len(titulos)} título(s) nesta visualização.")
+    st.write(f"**{len(titulos)}** título(s) nesta visualização.")
 
     for titulo in titulos:
-        with st.container():
-            st.markdown(
-                '<div class="collection-card">',
-                unsafe_allow_html=True
-            )
+        titulo_id_atual = titulo["id"]
 
+        with st.container(key=f"collection_card_{titulo_id_atual}"):
             col_poster, col_info = st.columns([1, 3], gap="large")
 
             with col_poster:
-                if titulo["poster"]:
+                if titulo.get("poster"):
                     st.image(
                         f"https://image.tmdb.org/t/p/w342{titulo['poster']}",
                         use_container_width=True
                     )
                 else:
-                    st.markdown("🎬 *Pôster indisponível*")
+                    st.markdown("🎬")
+                    st.caption("Pôster indisponível")
 
             with col_info:
                 favorito_atual = titulo.get("favorito", 0) == 1
@@ -313,11 +334,11 @@ else:
 
                 if st.button(
                     texto_favorito,
-                    key=f"favorito_{titulo['id']}",
+                    key=f"favorito_{titulo_id_atual}",
                     use_container_width=True
                 ):
                     atualizar_favorito(
-                        titulo["id"],
+                        titulo_id_atual,
                         not favorito_atual
                     )
                     st.rerun()
@@ -328,22 +349,28 @@ else:
                         unsafe_allow_html=True
                     )
 
+                status_atual = titulo.get("status") or "Quero assistir"
+
                 st.markdown(
-                    f'<div class="collection-status">{titulo["status"]}</div>',
+                    f'<div class="collection-status">{html.escape(status_atual)}</div>',
                     unsafe_allow_html=True
                 )
 
+                nome_seguro = html.escape(
+                    str(titulo.get("nome") or "Título sem nome")
+                )
+
                 st.markdown(
-                    f'<div class="collection-title">{titulo["nome"]}</div>',
+                    f'<div class="collection-title">{nome_seguro}</div>',
                     unsafe_allow_html=True
                 )
 
-                ano = titulo["ano"] or "Ano desconhecido"
-                categoria = titulo["categoria"] or "Título"
-                nota_tmdb = float(titulo["nota_tmdb"] or 0)
+                ano = titulo.get("ano") or "Ano desconhecido"
+                categoria = titulo.get("categoria") or "Título"
+                nota_tmdb = float(titulo.get("nota_tmdb") or 0)
 
                 st.markdown(
-                    f'<div class="collection-meta">{categoria} · {ano}</div>',
+                    f'<div class="collection-meta">{html.escape(str(categoria))} · {html.escape(str(ano))}</div>',
                     unsafe_allow_html=True
                 )
 
@@ -352,73 +379,75 @@ else:
                     unsafe_allow_html=True
                 )
 
+                sinopse = titulo.get("sinopse") or "Sinopse indisponível."
+                sinopse_segura = html.escape(str(sinopse))
+
                 st.markdown(
-                    f'<div class="collection-description">{titulo["sinopse"] or "Sinopse indisponível."}</div>',
+                    f'<div class="collection-description">{sinopse_segura}</div>',
                     unsafe_allow_html=True
                 )
 
                 if st.button(
                     "🔎 Ver detalhes",
-                    key=f"detalhes_{titulo['id']}",
+                    key=f"detalhes_{titulo_id_atual}",
                     use_container_width=True
                 ):
-                    st.session_state["titulo_detalhes"] = titulo["id"]
+                    st.session_state["titulo_detalhes"] = titulo_id_atual
                     st.switch_page("pages/3_Detalhes.py")
 
-                opcoes = [
+                opcoes_status = [
                     "Quero assistir",
                     "Assistindo",
                     "Concluído"
                 ]
 
-                status_atual = (
-                    titulo["status"]
-                    if titulo["status"] in opcoes
-                    else "Quero assistir"
-                )
+                if status_atual not in opcoes_status:
+                    status_atual = "Quero assistir"
 
                 novo_status = st.selectbox(
                     "Status",
-                    opcoes,
-                    index=opcoes.index(status_atual),
-                    key=f"status_{titulo['id']}"
+                    opcoes_status,
+                    index=opcoes_status.index(status_atual),
+                    key=f"status_{titulo_id_atual}"
                 )
 
-                if novo_status != titulo["status"]:
-                    atualizar_status(titulo["id"], novo_status)
+                if novo_status != titulo.get("status"):
+                    atualizar_status(titulo_id_atual, novo_status)
                     st.rerun()
 
-                nota_atual = titulo["nota_pessoal"]
-
-                if nota_atual is None:
-                    nota_atual = 0.0
+                nota_atual = titulo.get("nota_pessoal")
+                valor_nota = (
+                    float(nota_atual)
+                    if nota_atual is not None
+                    else 0.0
+                )
 
                 nova_nota = st.slider(
                     "Sua nota pessoal",
                     min_value=0.0,
                     max_value=10.0,
-                    value=float(nota_atual),
+                    value=valor_nota,
                     step=0.5,
-                    key=f"nota_{titulo['id']}"
+                    key=f"nota_{titulo_id_atual}"
                 )
 
                 if st.button(
                     "Salvar minha nota",
-                    key=f"salvar_nota_{titulo['id']}",
+                    key=f"salvar_nota_{titulo_id_atual}",
                     use_container_width=True
                 ):
                     atualizar_nota_pessoal(
-                        titulo["id"],
+                        titulo_id_atual,
                         nova_nota
                     )
                     st.success("Sua nota foi salva!")
                     st.rerun()
 
-                chave_confirmacao = f"confirmar_remocao_{titulo['id']}"
+                chave_confirmacao = f"confirmar_remocao_{titulo_id_atual}"
 
                 if st.button(
                     "🗑️ Remover da coleção",
-                    key=f"remover_{titulo['id']}",
+                    key=f"remover_{titulo_id_atual}",
                     use_container_width=True
                 ):
                     st.session_state[chave_confirmacao] = True
@@ -427,7 +456,7 @@ else:
                 if st.session_state.get(chave_confirmacao, False):
                     st.warning(
                         f"Tem certeza de que deseja remover "
-                        f"'{titulo['nome']}' da sua coleção?"
+                        f"'{titulo.get('nome') or 'este título'}' da sua coleção?"
                     )
 
                     col_confirmar, col_cancelar = st.columns(2)
@@ -435,23 +464,23 @@ else:
                     with col_confirmar:
                         if st.button(
                             "Sim, remover",
-                            key=f"confirmar_{titulo['id']}",
+                            key=f"confirmar_{titulo_id_atual}",
                             use_container_width=True
                         ):
-                            remover_titulo(titulo["id"])
+                            remover_titulo(titulo_id_atual)
                             st.session_state.pop(chave_confirmacao, None)
                             st.rerun()
 
                     with col_cancelar:
                         if st.button(
                             "Cancelar",
-                            key=f"cancelar_{titulo['id']}",
+                            key=f"cancelar_{titulo_id_atual}",
                             use_container_width=True
                         ):
                             st.session_state.pop(chave_confirmacao, None)
                             st.rerun()
 
-            st.markdown("</div>", unsafe_allow_html=True)
+st.divider()
 
 st.caption(
     "Este produto utiliza a API do TMDB, mas não é endossado nem certificado pelo TMDB."

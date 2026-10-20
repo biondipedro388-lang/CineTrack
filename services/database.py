@@ -7,6 +7,7 @@ DATABASE_PATH = Path(__file__).resolve().parent.parent / "cinetrack.db"
 def conectar():
     conexao = sqlite3.connect(DATABASE_PATH)
     conexao.row_factory = sqlite3.Row
+    conexao.execute("PRAGMA foreign_keys = ON")
     return conexao
 
 
@@ -40,6 +41,20 @@ def criar_tabela():
                 ALTER TABLE titulos
                 ADD COLUMN favorito INTEGER NOT NULL DEFAULT 0
             """)
+
+        conexao.execute("""
+            CREATE TABLE IF NOT EXISTS diario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                titulo_id INTEGER NOT NULL,
+                data_assistido TEXT NOT NULL,
+                nota REAL,
+                comentario TEXT,
+                criado_em TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (titulo_id)
+                    REFERENCES titulos(id)
+                    ON DELETE CASCADE
+            )
+        """)
 
 
 def listar_titulos():
@@ -112,6 +127,68 @@ def atualizar_dados_titulo(titulo_id, nome, ano, sinopse):
             sinopse.strip(),
             titulo_id
         ))
+
+
+def adicionar_registro_diario(
+    titulo_id,
+    data_assistido,
+    nota,
+    comentario
+):
+    with conectar() as conexao:
+        conexao.execute("""
+            INSERT INTO diario (
+                titulo_id,
+                data_assistido,
+                nota,
+                comentario
+            )
+            VALUES (?, ?, ?, ?)
+        """, (
+            titulo_id,
+            data_assistido,
+            nota,
+            comentario.strip() if comentario else ""
+        ))
+
+        conexao.execute("""
+            UPDATE titulos
+            SET status = 'Concluído'
+            WHERE id = ?
+        """, (titulo_id,))
+
+
+def listar_diario():
+    with conectar() as conexao:
+        registros = conexao.execute("""
+            SELECT
+                diario.id,
+                diario.titulo_id,
+                diario.data_assistido,
+                diario.nota,
+                diario.comentario,
+                diario.criado_em,
+                titulos.nome,
+                titulos.categoria,
+                titulos.ano,
+                titulos.poster
+            FROM diario
+            INNER JOIN titulos
+                ON titulos.id = diario.titulo_id
+            ORDER BY
+                diario.data_assistido DESC,
+                diario.id DESC
+        """).fetchall()
+
+        return [dict(registro) for registro in registros]
+
+
+def remover_registro_diario(registro_id):
+    with conectar() as conexao:
+        conexao.execute("""
+            DELETE FROM diario
+            WHERE id = ?
+        """, (registro_id,))
 
 
 def remover_titulo(titulo_id):
