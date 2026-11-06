@@ -1,6 +1,7 @@
 from pathlib import Path
 import sys
 import html
+import importlib
 import streamlit as st
 
 RAIZ = Path(__file__).resolve().parent
@@ -8,7 +9,7 @@ RAIZ = Path(__file__).resolve().parent
 if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
-from components.navbar import mostrar_navbar
+from components import navbar
 from services.database import listar_titulos
 
 st.set_page_config(
@@ -221,7 +222,8 @@ div[class*="st-key-home_favorite_"] {
     border: 1px solid #292e3e;
     border-radius: 15px;
     padding: 12px;
-    height: 100%;
+    height: auto;
+    min-width: 0;
     box-sizing: border-box;
 }
 
@@ -318,7 +320,8 @@ div[data-testid="stImage"] img {
 </style>
 """, unsafe_allow_html=True)
 
-mostrar_navbar()
+importlib.reload(navbar)
+navbar.mostrar_navbar()
 st.divider()
 
 titulos = listar_titulos() or []
@@ -513,7 +516,7 @@ def mostrar_titulo_resumido(titulo, chave, mostrar_status=False):
 
 
 if recentes:
-    colunas_recentes = st.columns(min(5, len(recentes)), gap="medium")
+    colunas_recentes = st.columns(5, gap="medium")
 
     for indice, titulo in enumerate(recentes[:5]):
         with colunas_recentes[indice]:
@@ -551,7 +554,7 @@ if favoritos:
         unsafe_allow_html=True
     )
 
-    colunas_favoritos = st.columns(min(5, len(favoritos)), gap="medium")
+    colunas_favoritos = st.columns(5, gap="medium")
 
     for indice, titulo in enumerate(favoritos[:5]):
         with colunas_favoritos[indice]:

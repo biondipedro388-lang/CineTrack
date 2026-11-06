@@ -1,132 +1,164 @@
-import sqlite3
-from pathlib import Path
-
-DATABASE_PATH = Path(__file__).resolve().parent.parent / "cinetrack.db"
+import streamlit as st
+from services.supabase_client import obter_cliente_usuario
 
 
-def conectar():
-    conexao = sqlite3.connect(DATABASE_PATH)
-    conexao.row_factory = sqlite3.Row
-    conexao.execute("PRAGMA foreign_keys = ON")
-    return conexao
+def _cliente():
+    return obter_cliente_usuario()
 
 
-def criar_tabela():
-    with conectar() as conexao:
-        conexao.execute("""
-            CREATE TABLE IF NOT EXISTS titulos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                tmdb_id INTEGER NOT NULL,
-                nome TEXT NOT NULL,
-                categoria TEXT NOT NULL,
-                ano TEXT,
-                nota_tmdb REAL DEFAULT 0,
-                sinopse TEXT,
-                poster TEXT,
-                status TEXT NOT NULL DEFAULT 'Quero assistir',
-                nota_pessoal REAL,
-                favorito INTEGER NOT NULL DEFAULT 0,
-                UNIQUE(tmdb_id, categoria)
-            )
-        """)
+def _usuario_id():
+    usuario = st.session_state.get("usuario_cinetrack")
 
-        colunas = conexao.execute(
-            "PRAGMA table_info(titulos)"
-        ).fetchall()
+    if not usuario or not usuario.get("id"):
+        return None
 
-        nomes_colunas = [coluna["name"] for coluna in colunas]
+    return usuario["id"]
 
-        if "favorito" not in nomes_colunas:
-            conexao.execute("""
-                ALTER TABLE titulos
-                ADD COLUMN favorito INTEGER NOT NULL DEFAULT 0
-            """)
 
-        conexao.execute("""
-            CREATE TABLE IF NOT EXISTS diario (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                titulo_id INTEGER NOT NULL,
-                data_assistido TEXT NOT NULL,
-                nota REAL,
-                comentario TEXT,
-                criado_em TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (titulo_id)
-                    REFERENCES titulos(id)
-                    ON DELETE CASCADE
-            )
-        """)
+def _exigir_usuario():
+    usuario_id = _usuario_id()
+
+    if not usuario_id:
+        st.warning("Entre na sua conta para acessar sua biblioteca.")
+        return None
+
+    return usuario_id
 
 
 def listar_titulos():
-    with conectar() as conexao:
-        titulos = conexao.execute("""
-            SELECT *
-            FROM titulos
-            ORDER BY id DESC
-        """).fetchall()
+    usuario_id = _usuario_id()
 
-        return [dict(titulo) for titulo in titulos]
+    if not usuario_id:
+        return []
+
+    resposta = (
+        _cliente()
+        .table("titulos")
+        .select("*")
+        .eq("user_id", usuario_id)
+        .order("id", desc=True)
+        .execute()
+    )
+
+    titulos = resposta.data or []
+
+    for titulo in titulos:
+        titulo["favorito"] = 1 if titulo.get("favorito") else 0
+
+    return titulos
 
 
 def adicionar_titulo(titulo):
-    with conectar() as conexao:
-        conexao.execute("""
-            INSERT OR IGNORE INTO titulos (
-                tmdb_id, nome, categoria, ano, nota_tmdb,
-                sinopse, poster, status
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            titulo["id"],
-            titulo["nome"],
-            titulo["categoria"],
-            titulo["ano"],
-            titulo["nota"],
-            titulo["sinopse"],
-            titulo["poster"],
-            titulo.get("status", "Quero assistir")
-        ))
+    usuario_id = _exigir_usuario()
+
+    if not usuario_id:
+        return
+
+    cliente = _cliente()
+    tmdb_id = titulo.get("id")
+    categoria = titulo.get("categoria")
+
+    existentes = (
+        cliente
+        .table("titulos")
+        .select("id")
+        .eq("user_id", usuario_id)
+        .eq("tmdb_id", tmdb_id)
+        .eq("categoria", categoria)
+        .execute()
+    )
+
+    if existentes.data:
+        return
+
+    ano = titulo.get("ano")
+
+    try:
+        ano = int(str(ano)[:4]) if ano else None
+    except (ValueError, TypeError):
+        ano = None
+
+    dados = {
+        "user_id": usuario_id,
+        "tmdb_id": tmdb_id,
+        "nome": titulo["nome"],
+        "categoria": categoria,
+        "ano": ano,
+        "nota_tmdb": titulo.get("nota"),
+        "sinopse": titulo.get("sinopse"),
+        "poster": titulo.get("poster"),
+        "status": titulo.get("status", "Quero assistir"),
+        "favorito": False,
+    }
+
+    cliente.table("titulos").insert(dados).execute()
 
 
 def atualizar_status(titulo_id, status):
-    with conectar() as conexao:
-        conexao.execute("""
-            UPDATE titulos
-            SET status = ?
-            WHERE id = ?
-        """, (status, titulo_id))
+    usuario_id = _exigir_usuario()
+
+    if not usuario_id:
+        return
+
+    _cliente().table("titulos").update({
+        "status": status
+    }).eq(
+        "id", titulo_id
+    ).eq(
+        "user_id", usuario_id
+    ).execute()
 
 
 def atualizar_nota_pessoal(titulo_id, nota):
-    with conectar() as conexao:
-        conexao.execute("""
-            UPDATE titulos
-            SET nota_pessoal = ?
-            WHERE id = ?
-        """, (nota, titulo_id))
+    usuario_id = _exigir_usuario()
+
+    if not usuario_id:
+        return
+
+    _cliente().table("titulos").update({
+        "nota_pessoal": nota
+    }).eq(
+        "id", titulo_id
+    ).eq(
+        "user_id", usuario_id
+    ).execute()
 
 
 def atualizar_favorito(titulo_id, favorito):
-    with conectar() as conexao:
-        conexao.execute("""
-            UPDATE titulos
-            SET favorito = ?
-            WHERE id = ?
-        """, (1 if favorito else 0, titulo_id))
+    usuario_id = _exigir_usuario()
+
+    if not usuario_id:
+        return
+
+    _cliente().table("titulos").update({
+        "favorito": bool(favorito)
+    }).eq(
+        "id", titulo_id
+    ).eq(
+        "user_id", usuario_id
+    ).execute()
 
 
 def atualizar_dados_titulo(titulo_id, nome, ano, sinopse):
-    with conectar() as conexao:
-        conexao.execute("""
-            UPDATE titulos
-            SET nome = ?, ano = ?, sinopse = ?
-            WHERE id = ?
-        """, (
-            nome.strip(),
-            ano.strip(),
-            sinopse.strip(),
-            titulo_id
-        ))
+    usuario_id = _exigir_usuario()
+
+    if not usuario_id:
+        return
+
+    try:
+        ano_convertido = int(str(ano).strip()[:4]) if ano else None
+    except (ValueError, TypeError):
+        ano_convertido = None
+
+    _cliente().table("titulos").update({
+        "nome": nome.strip(),
+        "ano": ano_convertido,
+        "sinopse": sinopse.strip() if sinopse else "",
+    }).eq(
+        "id", titulo_id
+    ).eq(
+        "user_id", usuario_id
+    ).execute()
 
 
 def adicionar_registro_diario(
@@ -135,68 +167,102 @@ def adicionar_registro_diario(
     nota,
     comentario
 ):
-    with conectar() as conexao:
-        conexao.execute("""
-            INSERT INTO diario (
-                titulo_id,
-                data_assistido,
-                nota,
-                comentario
-            )
-            VALUES (?, ?, ?, ?)
-        """, (
-            titulo_id,
-            data_assistido,
-            nota,
-            comentario.strip() if comentario else ""
-        ))
+    usuario_id = _exigir_usuario()
 
-        conexao.execute("""
-            UPDATE titulos
-            SET status = 'Concluído'
-            WHERE id = ?
-        """, (titulo_id,))
+    if not usuario_id:
+        return
+
+    cliente = _cliente()
+
+    titulo = (
+        cliente
+        .table("titulos")
+        .select("id")
+        .eq("id", titulo_id)
+        .eq("user_id", usuario_id)
+        .execute()
+    )
+
+    if not titulo.data:
+        st.error("Esse título não foi encontrado na sua coleção.")
+        return
+
+    if hasattr(data_assistido, "isoformat"):
+        data_assistido = data_assistido.isoformat()
+
+    cliente.table("diario").insert({
+        "user_id": usuario_id,
+        "titulo_id": titulo_id,
+        "data_assistido": data_assistido,
+        "nota": nota,
+        "comentario": comentario.strip() if comentario else "",
+    }).execute()
+
+    cliente.table("titulos").update({
+        "status": "Concluído"
+    }).eq(
+        "id", titulo_id
+    ).eq(
+        "user_id", usuario_id
+    ).execute()
 
 
 def listar_diario():
-    with conectar() as conexao:
-        registros = conexao.execute("""
-            SELECT
-                diario.id,
-                diario.titulo_id,
-                diario.data_assistido,
-                diario.nota,
-                diario.comentario,
-                diario.criado_em,
-                titulos.nome,
-                titulos.categoria,
-                titulos.ano,
-                titulos.poster
-            FROM diario
-            INNER JOIN titulos
-                ON titulos.id = diario.titulo_id
-            ORDER BY
-                diario.data_assistido DESC,
-                diario.id DESC
-        """).fetchall()
+    usuario_id = _usuario_id()
 
-        return [dict(registro) for registro in registros]
+    if not usuario_id:
+        return []
+
+    resposta = (
+        _cliente()
+        .table("diario")
+        .select(
+            "id, titulo_id, data_assistido, nota, "
+            "comentario, criado_em, "
+            "titulos(nome, categoria, ano, poster)"
+        )
+        .eq("user_id", usuario_id)
+        .order("data_assistido", desc=True)
+        .order("id", desc=True)
+        .execute()
+    )
+
+    registros = []
+
+    for registro in resposta.data or []:
+        titulo = registro.pop("titulos", None) or {}
+
+        registro["nome"] = titulo.get("nome")
+        registro["categoria"] = titulo.get("categoria")
+        registro["ano"] = titulo.get("ano")
+        registro["poster"] = titulo.get("poster")
+
+        registros.append(registro)
+
+    return registros
 
 
 def remover_registro_diario(registro_id):
-    with conectar() as conexao:
-        conexao.execute("""
-            DELETE FROM diario
-            WHERE id = ?
-        """, (registro_id,))
+    usuario_id = _exigir_usuario()
+
+    if not usuario_id:
+        return
+
+    _cliente().table("diario").delete().eq(
+        "id", registro_id
+    ).eq(
+        "user_id", usuario_id
+    ).execute()
 
 
 def remover_titulo(titulo_id):
-    with conectar() as conexao:
-        conexao.execute("""
-            DELETE FROM titulos
-            WHERE id = ?
-        """, (titulo_id,))
+    usuario_id = _exigir_usuario()
 
+    if not usuario_id:
+        return
 
-criar_tabela()
+    _cliente().table("titulos").delete().eq(
+        "id", titulo_id
+    ).eq(
+        "user_id", usuario_id
+    ).execute()
