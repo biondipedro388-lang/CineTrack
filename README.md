@@ -1,32 +1,37 @@
-
 # 🎬 CineTrack
 
 **Seus filmes, suas séries, sua história.**
 
-O CineTrack é uma aplicação desenvolvida em Python com Streamlit para organizar filmes e séries em uma biblioteca pessoal. O projeto integra a API do TMDB para consultar informações sobre títulos e permite acompanhar o que você deseja assistir, está assistindo ou já concluiu.
+O CineTrack é uma aplicação web desenvolvida em Python com Streamlit, criada para organizar filmes e séries em uma biblioteca pessoal.
+
+Integrado à API do TMDB, o sistema permite explorar títulos, consultar informações detalhadas, gerenciar uma coleção pessoal, registrar avaliações e acompanhar o histórico de filmes assistidos.
 
 ## ✨ Funcionalidades
 
-- 🎞️ Catálogo de filmes e séries.
-- 📚 Biblioteca pessoal para organizar títulos.
-- 📊 Painel com estatísticas da coleção.
+- 🎞️ Catálogo de filmes e séries integrado ao TMDB.
+- 📚 Biblioteca pessoal para organizar seus títulos.
 - 🏷️ Organização por status: Quero assistir, Assistindo e Concluído.
-- ⭐ Registro de avaliação pessoal.
-- 🔎 Consulta de informações, sinopses, notas e pôsteres através do TMDB.
+- ⭐ Avaliações pessoais dos títulos.
+- ❤️ Sistema de favoritos.
+- 🔎 Consulta de sinopses, notas, pôsteres e informações detalhadas.
 - 🎥 Exibição de trailers e vídeos.
 - 🎭 Consulta de elenco e equipe de produção.
-- 💾 Armazenamento local com SQLite.
+- 📊 Painel de estatísticas da coleção.
+- 📖 Diário para registrar filmes assistidos, avaliações, datas e comentários.
+- 🔐 Cadastro e autenticação de usuários com Supabase.
+- 💾 Persistência de dados com SQLite.
 - 🎨 Interface personalizada com CSS.
 
 ## 🛠️ Tecnologias utilizadas
 
-- **Python** — lógica da aplicação.
-- **Streamlit** — interface web.
-- **SQLite** — banco de dados local.
-- **TMDB API** — informações sobre filmes e séries.
-- **Requests** — comunicação com a API.
+- **Python** — lógica e desenvolvimento da aplicação.
+- **Streamlit** — construção da interface web.
+- **SQLite** — armazenamento de dados.
+- **Supabase** — autenticação de usuários.
+- **TMDB API** — consulta de informações sobre filmes e séries.
+- **Requests** — comunicação com APIs externas.
 - **HTML e CSS** — personalização visual.
-- **Git e GitHub** — versionamento do código.
+- **Git e GitHub** — versionamento e hospedagem do código.
 
 ## 📁 Estrutura do projeto
 
@@ -39,9 +44,12 @@ CineTrack/
 ├── pages/
 │   ├── 1_Catalogo.py
 │   ├── 2_Minha_Colecao.py
-│   └── 3_Detalhes.py
+│   ├── 3_Detalhes.py
+│   ├── 4_Estatisticas.py
+│   └── 5_Diario.py
 ├── services/
-│   └── database.py
+│   ├── database.py
+│   └── supabase_client.py
 ├── .gitignore
 ├── app.py
 ├── styles.css
@@ -54,7 +62,8 @@ CineTrack/
 
 - Python instalado.
 - Git instalado.
-- Uma chave de API do [The Movie Database (TMDB)](https://www.themoviedb.org/).
+- Conta e chave de API do [The Movie Database (TMDB)](https://www.themoviedb.org/).
+- Projeto configurado no [Supabase](https://supabase.com/).
 
 ### 2. Clone o repositório
 
@@ -75,20 +84,22 @@ python -m venv .venv
 ### 4. Instale as dependências
 
 ```powershell
-python -m pip install streamlit requests
+python -m pip install streamlit requests supabase
 ```
 
-### 5. Configure a chave da API
+### 5. Configure as credenciais
 
-Crie o arquivo `.streamlit/secrets.toml` e adicione:
+Crie o arquivo `.streamlit/secrets.toml` e configure suas credenciais:
 
 ```toml
 TMDB_API_KEY = "SUA_CHAVE_API"
+SUPABASE_URL = "SUA_URL_SUPABASE"
+SUPABASE_KEY = "SUA_CHAVE_SUPABASE"
 ```
 
-Substitua `SUA_CHAVE_API` pela sua chave pessoal do TMDB.
+Substitua os valores pelas suas próprias credenciais do TMDB e Supabase.
 
-**Importante:** não publique esse arquivo nem compartilhe sua chave de API.
+**Importante:** nunca publique esse arquivo ou compartilhe suas chaves de acesso.
 
 ### 6. Execute a aplicação
 
@@ -96,24 +107,21 @@ Substitua `SUA_CHAVE_API` pela sua chave pessoal do TMDB.
 python -m streamlit run app.py
 ```
 
-O Streamlit abrirá a aplicação no navegador.
+O Streamlit abrirá o CineTrack no navegador.
 
 ## 🔐 Segurança
 
-O arquivo `.streamlit/secrets.toml`, o ambiente virtual e o banco de dados local são excluídos do versionamento pelo `.gitignore`.
+As credenciais de acesso são armazenadas em arquivos de configuração locais e não devem ser enviadas ao repositório.
 
-Nunca compartilhe chaves de API ou outras credenciais no repositório.
+O arquivo `.streamlit/secrets.toml`, o ambiente virtual e os arquivos locais de banco de dados devem permanecer protegidos pelo `.gitignore`.
 
-## 🚀 Objetivo do projeto
+A autenticação de usuários é realizada por meio do Supabase.
 
-O CineTrack é um projeto de desenvolvimento de software criado para praticar Python, construção de interfaces web, integração com APIs externas, persistência de dados e organização de aplicações em múltiplas páginas.
+## 🎯 Objetivo do projeto
 
-## 📌 Próximas melhorias
+O CineTrack foi desenvolvido como projeto de aprendizado e aplicação prática de desenvolvimento de software.
 
-- [ ] Aprimorar a navegação e a experiência visual.
-- [ ] Adicionar filtros e opções de pesquisa.
-- [ ] Melhorar a organização e a visualização da coleção.
-- [ ] Implementar novas funcionalidades conforme a evolução do projeto.
+Seu desenvolvimento permitiu trabalhar com Python, construção de interfaces web, integração com APIs externas, bancos de dados, autenticação de usuários, organização de aplicações em múltiplas páginas e controle de versão com Git.
 
 ## 👨‍💻 Desenvolvedor
 
